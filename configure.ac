@@ -1,13 +1,40 @@
-AC_INIT([usf],[1.0.0], [andreas.sandberg@it.uu.se])
 AC_PREREQ(2.59)
+
+GENERIC_LIBRARY_NAME=usf
+
+dnl Increment if interfaces have been added set to zero if interfaces have 
+dnl been removed changed
+
+m4_define(usf_version_major, 1)
+dnl Increment if source code has changed set to zero if current is incremented
+m4_define(usf_version_minor, 0)
+dnl Increment if interfaces have been added, removed or changed
+m4_define(usf_version_micro, 0)
+
+AC_INIT([usf],[usf_version_major.usf_version_minor.usf_version_micro], [andreas.sandberg@it.uu.se])
+
+USF_VERSION_MAJOR=usf_version_major()
+USF_VERSION_MINOR=usf_version_minor()
+USF_VERSION_MICRO=usf_version_micro()
+AC_SUBST(USF_VERSION_MAJOR)
+AC_SUBST(USF_VERSION_MINOR)
+AC_SUBST(USF_VERSION_MICRO)
+
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([foreign])
 
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
 
 AC_PROG_CC_STDC
+
+AC_PROG_LIBTOOL
+
+AM_PATH_PYTHON([2.4])
+AX_PYTHON_DEVEL(>= '2.4')
+AX_PKG_SWIG(1.3.17, [], [ AC_MSG_ERROR([SWIG is required to build bindings.]) ])
+AX_SWIG_ENABLE_CXX
+AX_SWIG_PYTHON
 
 AC_CHECK_HEADERS([argp.h], 
   [ have_argp=true ], [
@@ -48,6 +75,8 @@ AC_CONFIG_FILES([
 	tools/Makefile
 
 	test/Makefile
+
+	swig/Makefile
 ])
 
 AC_OUTPUT
