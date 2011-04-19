@@ -1,5 +1,10 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS=include lib tools test swig
+if HAVE_PIN
+OPT_PIN=pin
+endif
+
+SUBDIRS=include lib tools $(OPT_PIN) test
 
 EXTRA_DIST = autogen.sh
+
