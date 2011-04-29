@@ -2,13 +2,14 @@ AC_PREREQ(2.59)
 
 GENERIC_LIBRARY_NAME=usf
 
-dnl Increment if interfaces have been added set to zero if interfaces have 
-dnl been removed changed
-
-m4_define(usf_version_major, 1)
-dnl Increment if source code has changed set to zero if current is incremented
-m4_define(usf_version_minor, 0)
-dnl Increment if interfaces have been added, removed or changed
+dnl Increment if backward compatibility with previous releases is not granted
+m4_define(usf_version_major, 0)
+dnl Increment if backward compatibility with previous releases is granted, 
+dnl but something changed in the implementation of the Component. 
+dnl (ie it methods could have been added)
+m4_define(usf_version_minor, 2)
+dnl Increment if the changes are small forward compatible bug fixes or 
+dnl documentation modifications
 m4_define(usf_version_micro, 0)
 
 AC_INIT([usf],[usf_version_major.usf_version_minor.usf_version_micro], [andreas.sandberg@it.uu.se])

@@ -1,11 +1,17 @@
 aclocal.m4
+compile
 configure
+config.guess
 config.h
 config.h.in
 config.log
 config.status
+config.sub
 depcomp
 install-sh
+libtool
+ltmain.sh
+py-compile
 Makefile
 Makefile.in
 missing
@@ -13,8 +19,13 @@ stamp-h1
 
 *.o
 *.a
+*.la
+*.lo
+*~
+*#_*#
 
 .deps/
+.libs/
 autom4te.cache/
 
 /pin/obj-*
@@ -33,3 +44,5 @@ autom4te.cache/
 /tools/usfsort
 /tools/usfsplit
 /tools/usfstats
+
+/swig/*.pyc
