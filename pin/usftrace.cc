@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2010-2011, David Eklov
  * Copyright (C) 2011, Andreas Sandberg
+ * Copyright (C) 2011, Nikos Nikoleris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,49 +30,85 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <sys/time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <uart/usf.h>
-#include "pin.H"
+#include <sys/time.h>
 
-KNOB<string> knob_filename(KNOB_MODE_WRITEONCE,
-                           "pintool", "o", "foo.usf", "Output filename");
-KNOB<UINT64> knob_begin_addr(KNOB_MODE_WRITEONCE,
-                             "pintool", "b", "0", "Start tracing at this address");
-KNOB<UINT64> knob_end_addr(KNOB_MODE_WRITEONCE,
-                           "pintool", "e", "0", "Stop tracing at this address");
-KNOB<BOOL> knob_detach(KNOB_MODE_WRITEONCE,
-                       "pintool", "d", "0", "Stop pin at stop address");
+#include "pin.H"
+#include "instlib.H"
+
+KNOB<string> knob_filename(KNOB_MODE_WRITEONCE, "pintool", "o",
+			   "foo.usf", "Output filename");
+KNOB<BOOL> knob_early_out(KNOB_MODE_WRITEONCE, "pintool", "d", "0",
+			  "Stop pin at stop address");
 KNOB<BOOL> knob_bzip2(KNOB_MODE_WRITEONCE,
                       "pintool", "c", "0", "Enable BZip2 compression");
 KNOB<BOOL> knob_inst_time(KNOB_MODE_WRITEONCE,
                           "pintool", "i", "0", "Use instruction count as time base");
 
-static int tracing;
-static unsigned long begin_addr; 
-static unsigned long end_addr;
+using namespace INSTLIB;
+
+LOCALVAR INT32 enabled = 0;
 
 static usf_file_t *usf_file;
 static usf_atime_t usf_time;
 
 static VOID fini(INT32 code, VOID *v);
 
-static VOID
-log_access(VOID *pc, VOID *addr, ADDRINT size, THREADID tid, UINT32 access_type)
+INSTLIB::ICOUNT icount;
+CONTROL control(false);
+
+LOCALFUN VOID
+Handler(CONTROL_EVENT ev, VOID *, CONTEXT * ctxt, VOID *, THREADID)
 {
-    usf_event_t e;
+    switch(ev) {
+    case CONTROL_START:
+	cerr << "Tracing started: " << icount.Count() << " instr" << endl;
+        PIN_RemoveInstrumentation();
+        enabled = 1;
+#if defined(TARGET_IA32) || defined(TARGET_IA32E)
+        // So that the rest of the current trace is re-instrumented.
+        if (ctxt) PIN_ExecuteAt (ctxt);
+#endif
+        break;
+    case CONTROL_STOP:
+	cerr << "Tracing finished: " << icount.Count() << " instr" << endl;
+        PIN_RemoveInstrumentation();
+	if (knob_early_out) {
+	    cerr << "Exiting due to -early_out" << endl;
+	    fini(0, NULL);
+	    exit(0);
+	}
+	PIN_Detach();
+#if defined(TARGET_IA32) || defined(TARGET_IA32E)
+        // So that the rest of the current trace is re-instrumented.
+        if (ctxt) PIN_ExecuteAt (ctxt);
+#endif
+        break;
+    default:
+        ASSERTX(false);
+    }
+}
 
-    e.type = USF_EVENT_TRACE;
-    e.u.trace.access.pc = (usf_addr_t)pc;
-    e.u.trace.access.addr = (usf_addr_t)addr;
-    e.u.trace.access.time = usf_time;
-    e.u.trace.access.tid = (usf_tid_t)tid;
-    e.u.trace.access.len = (usf_alen_t)size;
-    e.u.trace.access.type = (usf_atype_t)access_type;
+static VOID
+log_access(VOID *pc, VOID *addr, ADDRINT size, THREADID tid, UINT32 type)
+{
+    usf_event_t event;
+    usf_access_t *access;
+    
+    event.type = USF_EVENT_TRACE;
+    access = &event.u.trace.access;
+    
+    access->pc   = (usf_addr_t)pc;
+    access->addr = (usf_addr_t)addr;
+    access->time = usf_time;
+    access->tid  = (usf_tid_t)tid;
+    access->len  = (usf_alen_t)size;
+    access->type = (usf_atype_t)type;
 
-    if (usf_append(usf_file, &e) != USF_ERROR_OK) {
+    if (usf_append(usf_file, &event) != USF_ERROR_OK) {
         cerr << "USF: Failed to append event."  << endl;
         abort();
     }
@@ -83,24 +120,11 @@ inc_time()
     usf_time++;
 }
 
-static ADDRINT PIN_FAST_ANALYSIS_CALL
-is_tracing()
-{
-    return tracing;
-}
-
 static VOID
 instruction(INS ins, VOID *not_used)
 {
-    if (begin_addr && INS_Address(ins) == begin_addr)
-        tracing = 1;
-    if (end_addr && INS_Address(ins) == end_addr) {
-        tracing = 0;
-        if (knob_detach) {
-            fini(0, NULL);
-            exit(0);
-        }
-    }
+    if (!enabled)
+        return;
 
     UINT32 no_ops = INS_MemoryOperandCount(ins);
 
@@ -112,27 +136,21 @@ instruction(INS ins, VOID *not_used)
 	    is_rd && is_wr ? USF_ATYPE_RW :
 	    (is_wr ? USF_ATYPE_WR : USF_ATYPE_RD);
 
-        INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(is_tracing),
-                         IARG_FAST_ANALYSIS_CALL,
-                         IARG_END);
-	INS_InsertThenCall(ins, IPOINT_BEFORE,
-                           (AFUNPTR)log_access,
-                           IARG_INST_PTR,
-                           IARG_MEMORYOP_EA, op,
-                           IARG_UINT32, size,
-                           IARG_THREAD_ID,
-                           IARG_UINT32, atype,
-                           IARG_END); 
-
+	INS_InsertCall(ins, IPOINT_BEFORE,
+		       (AFUNPTR)log_access,
+		       IARG_INST_PTR,
+		       IARG_MEMORYOP_EA, op,
+		       IARG_UINT32, size,
+		       IARG_THREAD_ID,
+		       IARG_UINT32, atype,
+		       IARG_END); 
+	
         if (!knob_inst_time) {
             /* Increase the time counter if the time base is memory accesses */
-            INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(is_tracing),
-                             IARG_FAST_ANALYSIS_CALL,
-                             IARG_END);
-            INS_InsertThenCall(ins, IPOINT_BEFORE,
-                               AFUNPTR(inc_time),
-                               IARG_FAST_ANALYSIS_CALL,
-                               IARG_END);
+            INS_InsertCall(ins, IPOINT_BEFORE,
+			   AFUNPTR(inc_time),
+			   IARG_FAST_ANALYSIS_CALL,
+			   IARG_END);
         }
     }
 
@@ -140,13 +158,10 @@ instruction(INS ins, VOID *not_used)
         /* Increase the time counter if the time base is instructions.
          * NOTE: This means that multiple memory acceses may
          * happen at the same time */
-        INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(is_tracing),
-                         IARG_FAST_ANALYSIS_CALL,
-                         IARG_END);
-        INS_InsertThenCall(ins, IPOINT_BEFORE,
-                           AFUNPTR(inc_time),
-                           IARG_FAST_ANALYSIS_CALL,
-                           IARG_END);
+        INS_InsertCall(ins, IPOINT_BEFORE,
+		       AFUNPTR(inc_time),
+		       IARG_FAST_ANALYSIS_CALL,
+		       IARG_END);
     }
 }
 
@@ -161,13 +176,9 @@ init(int argc, char *argv[])
 
     memset(&header, 0, sizeof(header));
     
-    begin_addr = knob_begin_addr;
-    if (!begin_addr)
-        tracing = 1;
-    end_addr = knob_end_addr;
-
     header.version = USF_VERSION_CURRENT;
-    header.compression = knob_bzip2.Value() ? USF_COMPRESSION_BZIP2 : USF_COMPRESSION_NONE;
+    header.compression = knob_bzip2.Value() ? USF_COMPRESSION_BZIP2 : 
+	USF_COMPRESSION_NONE;
     header.flags = USF_FLAG_NATIVE_ENDIAN | USF_FLAG_TRACE | USF_FLAG_DELTA |
         (knob_inst_time ? USF_FLAG_TIME_INSTRUCTIONS : USF_FLAG_TIME_ACCESSES);
 
@@ -209,15 +220,16 @@ usage()
     return -1;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv))
         return usage();
 
-    if (init(argc, argv))
+   if (init(argc, argv))
         return -1;
 
+    control.CheckKnobs(Handler, 0);
+    icount.Activate();
     INS_AddInstrumentFunction(instruction, 0);
     PIN_AddFiniFunction(fini, 0);
 

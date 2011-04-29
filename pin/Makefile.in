@@ -1,8 +1,8 @@
-PIN_HOME=@PIN_HOME@
-PIN_KIT=$(PIN_HOME)
--include $(PIN_HOME)/source/tools/makefile.gnu.config
+PIN_HOME=@PIN_HOME@/source/tools
+PIN_KIT=@PIN_HOME@
+-include $(PIN_KIT)/source/tools/makefile.gnu.config
 
-CXXFLAGS = -I @top_srcdir@/include
+CXXFLAGS ?= -I @top_srcdir@/include -I$(PIN_HOME)/InstLib -fomit-frame-pointer -Wall -Werror -Wno-unknown-pragmas $(DBG) $(OPT) -MMD
 
 LIBS = ../lib/libusf.a -lbz2
 
