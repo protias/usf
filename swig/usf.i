@@ -66,7 +66,7 @@ Usf::open(const char *path)
 {
     usf_error_t e = usf_open(&file, path);
     if (e != USF_ERROR_OK) {
-	throw_exception(e);
+        throw_exception(e);
     }
 }
 
@@ -83,7 +83,7 @@ Usf::create(const char *path, const usf_header_t *header)
 
     err = usf_create(&file, path, header);
     if (err != USF_ERROR_OK) {
-	throw_exception(err);
+        throw_exception(err);
     }
 }
 
@@ -97,7 +97,7 @@ Usf::read()
 
     err = usf_read(file, e);
     if (err != USF_ERROR_OK) {
-	throw_exception(err);
+        throw_exception(err);
     }
 
     return e;
@@ -112,7 +112,7 @@ Usf::get_header()
     h = new usf_header_t;
     err = usf_header(&h, file);
     if (err != USF_ERROR_OK) {
-	throw_exception(err);
+        throw_exception(err);
     }
 
     return h;
@@ -158,49 +158,49 @@ Usf::get_header()
 
 %extend usf_event_t {
     usf_event_t() {
-	usf_event_t *e;
-	e = (usf_event_t *) malloc(sizeof(usf_event_t));
-	return e;
+        usf_event_t *e;
+        e = (usf_event_t *) malloc(sizeof(usf_event_t));
+        return e;
     }
     ~usf_event_t() {
-	free(self);
+        free(self);
     }
 /*
     bool is_trace() {
-	return self->type == USF_EVENT_TRACE;
+        return self->type == USF_EVENT_TRACE;
     }
     bool is_sample() {
-	return self->type == USF_EVENT_SAMPLE;
+        return self->type == USF_EVENT_SAMPLE;
     }
     bool is_dangling() {
-	return self->type == USF_EVENT_DANGLING;
+        return self->type == USF_EVENT_DANGLING;
     }
     bool is_burst() {
-	return self->type == USF_EVENT_BURST;
+        return self->type == USF_EVENT_BURST;
     }
     usf_event_trace_t get_trace() {
-	return self->u.trace;
+        return self->u.trace;
     }
     usf_event_sample_t get_sample() {
-	return self->u.sample;
+        return self->u.sample;
     }
     usf_event_dangling_t get_dangling() {
-	return self->u.dangling;
+        return self->u.dangling;
     }
     usf_event_burst_t get_burst() {
-	return self->u.burst;
+        return self->u.burst;
     }
 */
 };
 
 %extend usf_access_t {
     usf_access_t() {
-	usf_access_t *a;
-	a = (usf_access_t *) malloc(sizeof(usf_access_t));
-	return a;
+        usf_access_t *a;
+        a = (usf_access_t *) malloc(sizeof(usf_access_t));
+        return a;
     }
     ~usf_access_t() {
-	free(self);
+        free(self);
     }
 }
 
@@ -210,46 +210,53 @@ Usf::get_header()
 
     clear_exception();
     $action
-	
+
     error = check_exception();
     if (error != USF_ERROR_OK) {
-	errormsg = usf_strerror(error);
-	switch (error) {
-	case USF_ERROR_PARAM:
-	    PyErr_SetString(PyExc_TypeError, errormsg);
-	    break;
-	case USF_ERROR_SYS:
-	    PyErr_SetString(PyExc_OSError, errormsg);
-	    break;
-	case USF_ERROR_MEM:
-	    PyErr_SetString(PyExc_MemoryError, errormsg);
-	    break;
-	case USF_ERROR_EOF:
-	    PyErr_SetString(PyExc_EOFError, errormsg);
-	    break;
-	case USF_ERROR_FILE:
-	    PyErr_SetString(PyExc_StandardError, errormsg);
-	    break;
-	case USF_ERROR_UNSUPPORTED:
-	    PyErr_SetString(PyExc_NotImplementedError, errormsg);
-	    break;
-	default:
-	    PyErr_SetString(PyExc_NotImplementedError, "Check python bindings");
-	    break;
-	}
+        errormsg = usf_strerror(error);
+        switch (error) {
+        case USF_ERROR_PARAM:
+            PyErr_SetString(PyExc_TypeError, errormsg);
+            break;
+        case USF_ERROR_SYS:
+            PyErr_SetString(PyExc_OSError, errormsg);
+            break;
+        case USF_ERROR_MEM:
+            PyErr_SetString(PyExc_MemoryError, errormsg);
+            break;
+        case USF_ERROR_EOF:
+            PyErr_SetString(PyExc_EOFError, errormsg);
+            break;
+        case USF_ERROR_FILE:
+            PyErr_SetString(PyExc_StandardError, errormsg);
+            break;
+        case USF_ERROR_UNSUPPORTED:
+            PyErr_SetString(PyExc_NotImplementedError, errormsg);
+            break;
+        default:
+            PyErr_SetString(PyExc_NotImplementedError, "Check python bindings");
+            break;
+        }
 
-	return NULL;
+        return NULL;
     }
 }
 
 %newobject Usf::read;
-%newobject Usf::header;
+%newobject Usf::get_header;
 class Usf {
   public:
     void open(const char *path);
     void close();
     const usf_header_t* get_header();
-//    void create(const char *path, const usf_header_t *header);
     usf_event_t* read();
 };
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * indent-tabs-mode: nil
+ * c-file-style: "k&r"
+ * End:
+ */
