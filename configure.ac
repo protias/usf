@@ -35,9 +35,13 @@ AC_PROG_LIBTOOL
 
 AM_PATH_PYTHON([2.4])
 AX_PYTHON_DEVEL(>= '2.4')
-AX_PKG_SWIG(1.3.17, [], [ AC_MSG_ERROR([SWIG is required to build bindings.]) ])
+AX_PKG_SWIG(1.3.17, 
+	    [ have_swig=true ], 
+	    [ AC_MSG_ERROR([SWIG is required to build bindings.]) ])
 AX_SWIG_ENABLE_CXX
 AX_SWIG_PYTHON
+
+AM_CONDITIONAL([HAVE_SWIG], [ test x$have_swig = xtrue ])
 
 AC_CHECK_HEADERS([argp.h], 
   [ have_argp=true ], [

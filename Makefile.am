@@ -4,7 +4,11 @@ if HAVE_PIN
 OPT_PIN=pin
 endif
 
-SUBDIRS=include lib tools $(OPT_PIN) test
+if HAVE_SWIG
+OPT_SWIG=swig
+endif
+
+SUBDIRS=include lib tools $(OPT_PIN) $(OPT_SWIG) test
 
 EXTRA_DIST = autogen.sh
 
