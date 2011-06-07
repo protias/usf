@@ -49,7 +49,7 @@ static inline usf_error_t
 check_compression(usf_compression_t comp)
 {
 #define _COMP(comp, u1, u2, u3, u4) case comp:
-    switch (comp) { 
+    switch (comp) {
         USF_COMP_LIST
             return USF_ERROR_OK;
     default:
@@ -142,6 +142,7 @@ usf_create(usf_file_t **file,
     usf_error_t error;
 
     E_IF(!file || !header, USF_ERROR_PARAM);
+
     /* Currently we require the native endian bit to be set. We could
      * support having the foreign bit set instead, but we won't do
      * that at the moment. Having both bits set will always constitue
@@ -165,7 +166,7 @@ usf_create(usf_file_t **file,
     E_ERROR(write_magic(f->file));
     E_ERROR(usf_header_dup(&f->header, header));
     E_ERROR(usf_header_write(f->file, f->header));
-    
+
     E_ERROR(check_compression(f->header->compression));
     f->io_methods = &io_methods[f->header->compression];
     E_ERROR(usf_internal_init(f, USF_MODE_WRITE));

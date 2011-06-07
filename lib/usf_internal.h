@@ -53,7 +53,6 @@ typedef struct usf_io_methods_s {
     _COMP(USF_COMPRESSION_BZIP2,                                        \
           init_bzip2, fini_bzip2, read_bzip2, write_bzip2)              \
 
-
 usf_error_t init_none(usf_file_t *file, int mode);
 usf_error_t fini_none(usf_file_t *file);
 usf_error_t read_none(usf_file_t *file, void *buf, size_t count);
@@ -63,7 +62,6 @@ usf_error_t init_bzip2(usf_file_t *file, int mode);
 usf_error_t fini_bzip2(usf_file_t *file);
 usf_error_t read_bzip2(usf_file_t *file, void *buf, size_t count);
 usf_error_t write_bzip2(usf_file_t *file, const void *buf, size_t count);
-
 
 static inline usf_error_t
 usf_internal_init(usf_file_t *file, int mode)

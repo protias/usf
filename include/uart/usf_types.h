@@ -66,7 +66,7 @@ enum {
     USF_ATYPE_PREFETCHNTA,
     /** Intel PREFETCHT0 */
     USF_ATYPE_PREFETCHT0,
-    /** Intel PREFETCHT2 */
+    /** Intel PREFETCHT1 */
     USF_ATYPE_PREFETCHT1,
     /** Intel PREFETCHT2 */
     USF_ATYPE_PREFETCHT2,
@@ -86,13 +86,15 @@ typedef uint8_t usf_atype_t;
 
 /** Memory access */
 typedef struct {
-    usf_addr_t pc;
-    usf_addr_t addr;
-    usf_atime_t time;
+    usf_addr_t pc;      /**  0-7  byte */
+    usf_addr_t addr;    /**  8-15 byte */
+    usf_atime_t time;   /** 16-23 byte */
 
-    usf_tid_t tid;
-    usf_alen_t len;
-    usf_atype_t type;
+    usf_tid_t tid;      /* 24-25 byte */
+    usf_alen_t len;     /** 26-27 byte */
+    usf_atype_t type;   /** 28    byte */
+
+    usf_atime_t dep;    /** 29-36 byte */
 } usf_access_t;
 
 #ifdef __cplusplus

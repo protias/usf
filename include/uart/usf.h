@@ -84,6 +84,9 @@ typedef uint16_t usf_compression_t;
 /** Time in cycles */
 #define USF_FLAG_TIME_CYCLES (3 << 4)
 
+/** Time in accesses */
+#define USF_FLAG_DEPENDENCIES (1 << 6)
+
 /* @{ */
 /**
  * Always set the native endian flag when creating a file. If the

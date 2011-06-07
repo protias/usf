@@ -62,10 +62,31 @@ struct {
     { USF_FLAG_INSTRUCTIONS, "instructions" },
     { USF_FLAG_NATIVE_ENDIAN, "native endian" },
     { USF_FLAG_FOREIGN_ENDIAN, "foreign endian" },
+    { USF_FLAG_DEPENDENCIES, "dependecies" },
 };
 
 static void
-print_access(const usf_access_t *a)
+print_access_wdep(const usf_access_t *a)
+{
+    printf("[tid: %" PRIu16
+	   " pc: 0x%" PRIx64
+	   " addr: 0x%" PRIx64
+	   " time: %" PRIu64
+	   " len: %" PRIu16
+	   " type: %" PRIu8 " (%s)"
+           " dep: %" PRIu64 "]",
+
+	   a->tid,
+	   a->pc,
+	   a->addr,
+	   a->time,
+	   a->len,
+	   a->type, usf_stratype(a->type),
+           a->dep);
+}
+
+static void
+print_access_basic(const usf_access_t *a)
 {
     printf("[tid: %" PRIu16
 	   " pc: 0x%" PRIx64
@@ -81,6 +102,8 @@ print_access(const usf_access_t *a)
 	   a->len,
 	   a->type, usf_stratype(a->type));
 }
+
+void (*print_access)(const usf_access_t *);
 
 static void
 print_event(const usf_event_t *e)
@@ -150,6 +173,10 @@ print_header(const usf_header_t *h)
         if (h->flags & flag_names[i].flag)
             printf("\t\t%s\n", flag_names[i].name);
     }
+    if (h->flags & USF_FLAG_DEPENDENCIES)
+        print_access = print_access_wdep;
+    else
+        print_access = print_access_basic;
 
     printf("\tTime base: ");
     switch (h->flags & USF_FLAG_TIME_MASK) {

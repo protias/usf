@@ -45,10 +45,13 @@ typedef struct {
 /* ********************************************************************** */
 
 #define DATA_LEN_ACCESS (2*sizeof(usf_addr_t) + \
-			 sizeof(usf_atime_t) +  \
-			 sizeof(usf_tid_t) +    \
-			 sizeof(usf_alen_t) +   \
-			 sizeof(usf_atype_t))
+                         sizeof(usf_atime_t) +  \
+                         sizeof(usf_tid_t) +    \
+                         sizeof(usf_alen_t) +   \
+                         sizeof(usf_atype_t))
+
+#define DATA_LEN_ACCESS_WDEP (DATA_LEN_ACCESS + \
+                         sizeof(usf_addr_t))
 
 #define D_DELTA_pc (1 << 0)
 #define D_DELTA_addr (1 << 1)
@@ -195,7 +198,9 @@ write_access(usf_file_t *file, const usf_access_t *a)
 	PACK_UINT8(file, buf, &cur, a, type);
         
         E_ERROR(usf_internal_write(file, (const void *)buf, cur - buf));
-    } else
+    } else if (file->header->flags & USF_FLAG_DEPENDENCIES) 
+        E_ERROR(usf_internal_write(file, (const void *)a, DATA_LEN_ACCESS_WDEP));
+    else
         E_ERROR(usf_internal_write(file, (const void *)a, DATA_LEN_ACCESS));
 
 ret_err:
@@ -224,7 +229,9 @@ read_access(usf_file_t *file, usf_access_t *a)
 	UNPACK_UINT16(file, *buf, &cur, a, tid);
 	UNPACK_UINT16(file, *buf, &cur, a, len);
 	UNPACK_UINT8(file, *buf, &cur, a, type);
-    } else
+    } else if (file->header->flags & USF_FLAG_DEPENDENCIES) 
+        E_ERROR(usf_internal_read(file, (void *)a, DATA_LEN_ACCESS_WDEP));
+    else
         E_ERROR(usf_internal_read(file, (void *)a, DATA_LEN_ACCESS));
 
 ret_err:

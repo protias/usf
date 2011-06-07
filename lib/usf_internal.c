@@ -54,7 +54,7 @@ usf_error_t
 read_none(usf_file_t *file, void *buf, size_t count)
 {
     usf_error_t error = USF_ERROR_OK;
-
+    
     if (fread(buf, count, 1, file->file) != 1)
         error = feof(file->file) ? USF_ERROR_EOF : USF_ERROR_SYS;
 
