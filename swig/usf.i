@@ -159,7 +159,7 @@ Usf::get_header()
 %extend usf_event_t {
     usf_event_t() {
         usf_event_t *e;
-        e = (usf_event_t *) malloc(sizeof(usf_event_t));
+        e = (usf_event_t *) calloc(1, sizeof(usf_event_t));
         return e;
     }
     ~usf_event_t() {
@@ -196,7 +196,7 @@ Usf::get_header()
 %extend usf_access_t {
     usf_access_t() {
         usf_access_t *a;
-        a = (usf_access_t *) malloc(sizeof(usf_access_t));
+        a = (usf_access_t *) calloc(1, sizeof(usf_access_t));
         return a;
     }
     ~usf_access_t() {

@@ -50,8 +50,7 @@ typedef struct {
                          sizeof(usf_alen_t) +   \
                          sizeof(usf_atype_t))
 
-#define DATA_LEN_ACCESS_WDEP (DATA_LEN_ACCESS + \
-                         sizeof(usf_addr_t))
+#define DATA_LEN_ACCESS_WDEP (sizeof(usf_access_t))
 
 #define D_DELTA_pc (1 << 0)
 #define D_DELTA_addr (1 << 1)

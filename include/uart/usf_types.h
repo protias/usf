@@ -90,11 +90,12 @@ typedef struct {
     usf_addr_t addr;    /**  8-15 byte */
     usf_atime_t time;   /** 16-23 byte */
 
-    usf_tid_t tid;      /* 24-25 byte */
+    usf_tid_t tid;      /** 24-25 byte */
     usf_alen_t len;     /** 26-27 byte */
     usf_atype_t type;   /** 28    byte */
 
-    usf_atime_t dep;    /** 29-36 byte */
+    uint8_t pad[3];     /** 29-31 byte */
+    usf_atime_t dep;    /** 32-39 byte */
 } usf_access_t;
 
 #ifdef __cplusplus
