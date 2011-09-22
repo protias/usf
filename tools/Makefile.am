@@ -7,7 +7,6 @@ bin_PROGRAMS = usfsort usfcat usfstats usf2trace \
 		$(PROG_NEED_ARGP)
 
 CPPFLAGS = -I $(top_srcdir)/include
-#LDADD = ../lib/libusf.a
 
 # XXX -lm is only needed by usfresampler
 LIBS += -lm -lusf
