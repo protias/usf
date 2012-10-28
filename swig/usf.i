@@ -165,6 +165,7 @@ Usf::get_header()
     ~usf_event_t() {
         free(self);
     }
+
 /*
     bool is_trace() {
         return self->type == USF_EVENT_TRACE;
@@ -178,6 +179,8 @@ Usf::get_header()
     bool is_burst() {
         return self->type == USF_EVENT_BURST;
     }
+*/
+
     usf_event_trace_t get_trace() {
         return self->u.trace;
     }
@@ -190,8 +193,52 @@ Usf::get_header()
     usf_event_burst_t get_burst() {
         return self->u.burst;
     }
-*/
-};
+ }
+
+%extend usf_event_trace_t {
+    usf_event_trace_t() {
+        usf_event_trace_t *t;
+        t = (usf_event_trace_t *) calloc(1, sizeof(usf_event_trace_t));
+        return t;
+    }
+    ~usf_event_trace_t() {
+        free(self);
+    }
+ }
+
+%extend usf_event_sample_t {
+    usf_event_sample_t() {
+        usf_event_sample_t *t;
+        t = (usf_event_sample_t *) calloc(1, sizeof(usf_event_sample_t));
+        return t;
+    }
+    ~usf_event_sample_t() {
+        free(self);
+    }
+
+    usf_access_t get_access_begin() {
+        return self->begin;
+    }
+
+    usf_access_t get_access_end() {
+        return self->end;
+    }
+ }
+
+%extend usf_event_dangling_t {
+    usf_event_dangling_t() {
+        usf_event_dangling_t *t;
+        t = (usf_event_dangling_t *) calloc(1, sizeof(usf_event_dangling_t));
+        return t;
+    }
+    ~usf_event_dangling_t() {
+        free(self);
+    }
+
+    usf_access_t get_access() {
+        return self->begin;
+    }
+ }
 
 %extend usf_access_t {
     usf_access_t() {

@@ -9,7 +9,8 @@ bin_PROGRAMS = usfsort usfcat usfstats usf2trace \
 CPPFLAGS = -I $(top_srcdir)/include
 
 # XXX -lm is only needed by usfresampler
-LIBS += -lm -lusf
+LDFLAGS += -lm -lusf 
+LIBS += -L$(top_srcdir)/lib
 
 
 usfdump_SOURCES = usfdump.c
